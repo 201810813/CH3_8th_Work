@@ -3,7 +3,9 @@
 
 #include "SpartaCharacter.h"
 #include "SpartaGameState.h"
+#include "Components/TextBlock.h"
 #include "SpartaPlayerController.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameState.h"
 
@@ -37,6 +39,11 @@ ASpartaCharacter::ASpartaCharacter()
 	Camera=CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm);
 	Camera->bUsePawnControlRotation = false;
+	
+	//위젯
+	OverHeadWidget=CreateDefaultSubobject<UWidgetComponent>(TEXT("OverHead"));
+	OverHeadWidget->SetupAttachment(GetMesh());
+	OverHeadWidget->SetWidgetSpace(EWidgetSpace::Screen);
 	//속도
 	OriginSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	SprintRate = 1.3f;
@@ -54,12 +61,15 @@ ASpartaCharacter::ASpartaCharacter()
 	//디버프
 	bIsReverse = false;
 	ReverseTime = 5.0f;
+	
+	
 }
 
 // Called when the game starts or when spawned
 void ASpartaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	UpdateOverheadHP();
 	GetWorldTimerManager().SetTimer(
 		StaminaRegenTimerHandle,
 		this,
@@ -132,6 +142,10 @@ void ASpartaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 }
 
+//----------------------//
+//       로직 함수      //
+//---------------------//
+
 float ASpartaCharacter::TakeDamage(float DamageAmount,
 	struct FDamageEvent const& DamageEvent,
 	AController* EventInstigator,
@@ -140,7 +154,7 @@ float ASpartaCharacter::TakeDamage(float DamageAmount,
 	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	CurrentHealth = FMath::Clamp(CurrentHealth-ActualDamage , 0.0f, MaxHealth);
-	UE_LOG(LogTemp, Warning, TEXT("Damaged!!, Current Health = %f"), CurrentHealth);
+	UpdateOverheadHP();
 	if (CurrentHealth <= 0.0f)
 	{
 		OnDeath();
@@ -159,6 +173,21 @@ void ASpartaCharacter::OnDeath()
 	}
 }
 
+void ASpartaCharacter::UpdateOverheadHP()
+{
+	if (!OverHeadWidget)return;
+	if (UUserWidget* OverHeadWidgetInstance = OverHeadWidget->GetUserWidgetObject())
+	{
+		if (UTextBlock* TextBlock = Cast<UTextBlock>(OverHeadWidgetInstance->GetWidgetFromName("OverHeadHP")))
+		{
+			TextBlock->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"),CurrentHealth, MaxHealth)));
+			FSlateColor newColor(FLinearColor(1.0f,0.0f,0.0f,1.0f));
+			TextBlock->SetColorAndOpacity(newColor);
+		}
+	}
+	
+}
+
 //----------------------//
 //       회복 함수       //
 //---------------------//
@@ -174,6 +203,7 @@ void ASpartaCharacter::Heal(float Amount)
 {
 	CurrentHealth = FMath::Clamp(CurrentHealth + Amount, 0.0f, MaxHealth);
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, FString::Printf(TEXT("Heal!!, Current Health = %f"), CurrentHealth));
+	UpdateOverheadHP();
 }
 
 //----------------------//
@@ -182,7 +212,7 @@ void ASpartaCharacter::Heal(float Amount)
 void ASpartaCharacter::ReversControl(float Duration)
 {
 	bIsReverse = true;
-	if (ReverseTime > 0.0f)
+	if (!FMath::IsNearlyZero(ReverseTime))
 	{
 		ReverseTime += Duration;
 		GetWorldTimerManager().ClearTimer(ReverseClearTimerHandle);

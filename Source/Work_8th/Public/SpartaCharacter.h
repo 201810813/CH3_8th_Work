@@ -10,6 +10,7 @@
 #include "SpartaCharacter.generated.h"
 
 struct FInputActionValue;
+class UWidgetComponent;
 
 UCLASS()
 class WORK_8TH_API ASpartaCharacter : public ACharacter
@@ -20,9 +21,10 @@ public:
 	ASpartaCharacter();
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Components")
 	USpringArmComponent* SpringArm;
-
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Components")
 	UCameraComponent* Camera;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="UI")
+	UWidgetComponent* OverHeadWidget;
 
 protected:
 	virtual void BeginPlay() override;
@@ -122,4 +124,5 @@ public:
 
 	//로직
 	void OnDeath();
+	void UpdateOverheadHP();
 };
