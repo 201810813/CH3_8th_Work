@@ -124,5 +124,8 @@ public:
 
 	//로직
 	void OnDeath();
+
+	//3D 위젯 업데이트
 	void UpdateOverheadHP();
+	void UpdateOverheadStamina();
 };

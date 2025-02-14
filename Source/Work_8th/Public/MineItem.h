@@ -21,7 +21,13 @@ public:
 	float MineDelay;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	float MineRadius;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Mine")
+	UParticleSystem* ExplodeEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Mine")
+	USoundBase* ExplodeSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	bool bHadExploded;
+	
 	FTimerHandle MineExplodeTimer;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Component")

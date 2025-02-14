@@ -5,6 +5,7 @@
 #include "SpartaGameState.h"
 #include "Components/TextBlock.h"
 #include "SpartaPlayerController.h"
+#include "Components/ProgressBar.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/GameState.h"
@@ -178,14 +179,30 @@ void ASpartaCharacter::UpdateOverheadHP()
 	if (!OverHeadWidget)return;
 	if (UUserWidget* OverHeadWidgetInstance = OverHeadWidget->GetUserWidgetObject())
 	{
-		if (UTextBlock* TextBlock = Cast<UTextBlock>(OverHeadWidgetInstance->GetWidgetFromName("OverHeadHP")))
+		if (UProgressBar* HPProgressBar = Cast<UProgressBar>(OverHeadWidgetInstance->GetWidgetFromName("HPBar")))
 		{
-			TextBlock->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"),CurrentHealth, MaxHealth)));
-			FSlateColor newColor(FLinearColor(1.0f,0.0f,0.0f,1.0f));
-			TextBlock->SetColorAndOpacity(newColor);
+			float Percent = FMath::Clamp(CurrentHealth/MaxHealth,0.0f,1.0f);
+			HPProgressBar->SetPercent(Percent);
+		}
+		if (UProgressBar* StaminaBar = Cast<UProgressBar>(OverHeadWidgetInstance->GetWidgetFromName("StaminaBar")))
+		{
+			float Percent = FMath::Clamp(CurrentStamina/MaxStamina,0.0f,1.0f);
+			StaminaBar->SetPercent(Percent);
 		}
 	}
-	
+}
+
+void ASpartaCharacter::UpdateOverheadStamina()
+{
+	if (!OverHeadWidget)return;
+	if (UUserWidget* OverHeadWidgetInstance = OverHeadWidget->GetUserWidgetObject())
+	{
+		if (UProgressBar* StaminaBar = Cast<UProgressBar>(OverHeadWidgetInstance->GetWidgetFromName("StaminaBar")))
+		{
+			float Percent = FMath::Clamp(CurrentStamina/MaxStamina,0.0f,1.0f);
+			StaminaBar->SetPercent(Percent);
+		}
+	}
 }
 
 //----------------------//
@@ -196,6 +213,7 @@ void ASpartaCharacter::UpdateOverheadHP()
 void ASpartaCharacter::RegenStamina()
 {
 	CurrentStamina = FMath::Clamp(CurrentStamina + StaminaRegenRate, 0.0f, MaxStamina);
+	UpdateOverheadStamina();
 }
 
 //체력 회복
@@ -381,6 +399,7 @@ void ASpartaCharacter::StartSprint(const FInputActionValue& Value)
 				GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
 				StaminaRegenRate = 0.0f;
 				CurrentStamina -= 0.1f;
+				UpdateOverheadStamina();
 			}
 			else
 			{
@@ -388,11 +407,10 @@ void ASpartaCharacter::StartSprint(const FInputActionValue& Value)
 				GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
 				StaminaRegenRate = 0.0f;
 				CurrentStamina -= 0.1f;
+				UpdateOverheadStamina();
 			}
-			
 		}
-		
-	}	
+	}
 	
 }
 
